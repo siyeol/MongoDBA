@@ -1,0 +1,63 @@
+version: '3'
+
+# Define environment variables for common values
+x-common-variables:
+  MONGO_IMAGE: mongo:4.4
+  CONFIG_REPL_SET: configReplSet
+
+services:
+  # Config servers
+  configsvr01:
+    image: ${MONGO_IMAGE}
+    command: --configsvr --replSet ${CONFIG_REPL_SET} --port 27027
+    ports:
+      - 27027:27027
+
+  configsvr02:
+    image: ${MONGO_IMAGE}
+    command: --configsvr --replSet ${CONFIG_REPL_SET} --port 27028
+    ports:
+      - 27028:27028
+
+  configsvr03:
+    image: ${MONGO_IMAGE}
+    command: --configsvr --replSet ${CONFIG_REPL_SET} --port 27029
+    ports:
+      - 27029:27029
+
+  # Mongos router
+  mongos:
+    image: ${MONGO_IMAGE}
+    command: mongos --configdb ${CONFIG_REPL_SET}/configsvr01:27027,configsvr02:27028,configsvr03:27029 --port 27026
+    ports:
+      - 27026:27026
+    depends_on:
+      - configsvr01
+      - configsvr02
+      - configsvr03
+
+  # Shard servers for shard 1
+  shard01a:
+    image: ${MONGO_IMAGE}
+    command: --shardsvr --replSet shard01ReplSet --port 27030
+    ports:
+      - 27030:27030
+
+  shard01b:
+    image: ${MONGO_IMAGE}
+    command: --shardsvr --replSet shard01ReplSet --port 27031
+    ports:
+      - 27031:27031
+
+  # Shard servers for shard 2
+  shard02a:
+    image: ${MONGO_IMAGE}
+    command: --shardsvr --replSet shard02ReplSet --port 27032
+    ports:
+      - 27032:27032
+
+  shard02b:
+    image: ${MONGO_IMAGE}
+    command: --shardsvr --replSet shard02ReplSet --port 27033
+    ports:
+      - 27033:27033
